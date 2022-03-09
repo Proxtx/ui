@@ -1,0 +1,19 @@
+{
+  "name": "@proxtx/ui",
+  "version": "1.0.0",
+  "description": "UI",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Proxtx/UI.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Proxtx/UI/issues"
+  },
+  "homepage": "https://github.com/Proxtx/UI#readme"
+}
