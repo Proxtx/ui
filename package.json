@@ -15,8 +15,5 @@
   "bugs": {
     "url": "https://github.com/Proxtx/UI/issues"
   },
-  "homepage": "https://github.com/Proxtx/UI#readme",
-  "dependencies": {
-    "@proxtx/html": "^1.1.0"
-  }
+  "homepage": "https://github.com/Proxtx/UI#readme"
 }

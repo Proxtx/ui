@@ -1,15 +1,43 @@
 let componentHandler;
-if (window.componentHandler) componentHandler = componentHandler;
+if (window.componentHandler) componentHandler = window.componentHandler;
 else componentHandler = await (await fetch("./componentHandler.js")).text();
 
-console.log("yes i do exist");
+/**
+ * Generates a component generator based on an url
+ * @param {String} url The component url
+ * @returns The component generator
+ */
+export const load = (url) => {
+  return async function () {
+    return await generateIframe({ url, args: arguments });
+  };
+};
+
+/**
+ * Uses components.json to fetch a full UI library
+ * @param {String} url The folder url
+ * @returns An object with component generators
+ */
+export const loadPack = async (url) => {
+  let packInfo = JSON.parse(
+    await (await fetch(url + "/components.json")).text()
+  );
+
+  let result = {};
+
+  for (let i of Object.keys(packInfo.components)) {
+    result[i] = load(packInfo.components[i].url);
+  }
+
+  return result;
+};
 
 /**
  * Loads a module template and returns its class
  * @param {Object} options Additional options. Must provide the location of module
  * @return {Module} The module as class
  */
-export const load = async (options) => {
+export const generateIframe = async (options) => {
   let iframe = document.createElement("iframe");
   iframe.src = options.url;
   iframe.style.border = "none";
@@ -18,31 +46,76 @@ export const load = async (options) => {
     iframe.contentWindow.componentHandler = componentHandler;
     iframe.contentWindow.isComponent = true;
     iframe.contentWindow.args = options.args;
-    iframe.contentWindow.setDimension = (width, height) => {
+    iframe.contentWindow.setDimensions = (width, height) => {
       iframe.width = width;
       iframe.height = height;
     };
+    iframe.contentWindow.reportComponentApi = (api) => {
+      returnObj.component = api;
+      returnObj.onInit();
+      initResolve && initResolve();
+    };
+
+    let contentWrap = iframe.contentDocument.createElement("div");
+    contentWrap.id = "componentWrap";
+    for (let i of iframe.contentDocument.body.childNodes) {
+      contentWrap.appendChild(i);
+    }
+    iframe.contentDocument.body.appendChild(contentWrap);
 
     let script = iframe.contentDocument.createElement("script");
     script.type = "module";
     script.text = componentHandler;
     iframe.contentDocument.documentElement.appendChild(script);
   };
+  let initResolve;
 
-  return { iframe };
+  let returnObj = {
+    element: iframe,
+    component: {},
+    onInit: () => {},
+    init: async () => {
+      await new Promise((r) => (initResolve = r));
+    },
+  };
+
+  return returnObj;
 };
 
 export const startup = async () => {
   window.load = load;
-
-  console.log("ich kann nicht mehr");
-
   let handler = document.getElementById("handler");
   if (!handler) throw new Error("Cant find handler " + window.location);
 
   let importObject = await import(handler.src);
 
-  importObject.changeName("test 5.0");
+  await importObject.create(...window.args);
+
+  let components = document.getElementsByClassName("component");
+  for (let i of components) {
+    let res = await load(i.getAttribute("src"))(
+      ...i
+        .getAttribute("attributes")
+        .split(",")
+        .map((value) => value.trim())
+    );
+    i.appendChild(res.element);
+
+    await res.init();
+  }
+
+  let calculatedStyle = getComputedStyle(
+    document.getElementById("componentWrap")
+  );
+  window.setDimensions(
+    calculatedStyle.width.split("px")[0],
+    calculatedStyle.height.split("px")[0]
+  );
+
+  document.body.style.overflow = "hidden";
+  document.body.style.margin = "0";
+
+  window.reportComponentApi(importObject);
 };
 
 if (window.isComponent) startup();
