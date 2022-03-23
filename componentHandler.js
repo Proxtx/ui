@@ -84,11 +84,10 @@ export const generateIframe = async (options) => {
 
 export const startup = async () => {
   window.load = load;
+
   let handler = document.getElementById("handler");
   if (!handler) throw new Error("Cant find handler " + window.location);
-
   let importObject = await import(handler.src);
-
   await importObject.create(...window.args);
 
   let components = document.getElementsByClassName("component");
@@ -100,7 +99,6 @@ export const startup = async () => {
         .map((value) => value.trim())
     );
     i.appendChild(res.element);
-
     await res.init();
   }
 
