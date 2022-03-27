@@ -92,12 +92,11 @@ export const startup = async () => {
 
   let components = document.getElementsByClassName("component");
   for (let i of components) {
-    let res = await load(i.getAttribute("src"))(
-      ...i
-        .getAttribute("attributes")
-        .split(",")
-        .map((value) => value.trim())
+    let attributes = {};
+    i.getAttributeNames().forEach(
+      (value) => (attributes[value] = i.getAttribute(value))
     );
+    let res = await load(i.getAttribute("src"))(attributes);
     i.appendChild(res.element);
     await res.init();
   }
