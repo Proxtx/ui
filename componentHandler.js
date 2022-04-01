@@ -2,6 +2,9 @@ let componentHandler;
 if (window.componentHandler) componentHandler = window.componentHandler;
 else componentHandler = await (await fetch("./componentHandler.js")).text();
 
+let components = {};
+if (window.components) components = window.components;
+
 /**
  * Generates a component generator based on an url
  * @param {String} url The component url
