@@ -2,9 +2,6 @@ let componentHandler;
 if (window.componentHandler) componentHandler = window.componentHandler;
 else componentHandler = await (await fetch("./componentHandler.js")).text();
 
-let components;
-if (window.components) components = window.components;
-
 /**
  * Generates a component generator based on an url
  * @param {String} url The component url
@@ -99,11 +96,7 @@ export const startup = async () => {
     i.getAttributeNames().forEach(
       (value) => (attributes[value] = i.getAttribute(value))
     );
-    let component =
-      i.getAttribute("component") && components
-        ? components[i.getAttribute("component")]
-        : load(i.getAttribute("src"));
-    let res = await component(attributes);
+    let res = await load(i.getAttribute("src"))(attributes);
     i.appendChild(res.element);
     await res.init();
   }
