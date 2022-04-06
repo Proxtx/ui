@@ -88,18 +88,10 @@ export const startup = async () => {
   let handler = document.getElementById("handler");
   if (!handler) throw new Error("Cant find handler " + window.location);
   let importObject = await import(handler.src);
-  await importObject.create(...window.args);
 
-  let components = document.getElementsByClassName("component");
-  for (let i of components) {
-    let attributes = {};
-    i.getAttributeNames().forEach(
-      (value) => (attributes[value] = i.getAttribute(value))
-    );
-    let res = await load(i.getAttribute("src"))(attributes);
-    i.appendChild(res.element);
-    await res.init();
-  }
+  insertComponents();
+
+  await importObject.create(...window.args);
 
   let calculatedStyle = getComputedStyle(
     document.getElementById("componentWrap")
@@ -116,3 +108,16 @@ export const startup = async () => {
 };
 
 if (window.isComponent) startup();
+
+export const insertComponents = async () => {
+  let components = document.getElementsByClassName("component");
+  for (let i of components) {
+    let attributes = {};
+    i.getAttributeNames().forEach(
+      (value) => (attributes[value] = i.getAttribute(value))
+    );
+    let res = await load(i.getAttribute("src"))(attributes);
+    i.appendChild(res.element);
+    await res.init();
+  }
+};
