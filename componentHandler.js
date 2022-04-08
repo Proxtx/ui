@@ -1,6 +1,6 @@
 let componentHandler;
 if (window.componentHandler) componentHandler = window.componentHandler;
-else componentHandler = await (await fetch("./componentHandler.js")).text();
+else componentHandler = await (await fetch(import.meta.url)).text();
 
 /**
  * Generates a component generator based on an url
