@@ -58,6 +58,7 @@ export const generateIframe = async (options) => {
 
     let contentWrap = iframe.contentDocument.createElement("div");
     contentWrap.id = "componentWrap";
+    contentWrap.style.position = "absolute";
     for (let i of iframe.contentDocument.body.childNodes) {
       contentWrap.appendChild(i);
     }
