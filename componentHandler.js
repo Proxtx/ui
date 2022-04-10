@@ -46,13 +46,13 @@ export const generateIframe = async (options) => {
     iframe.contentWindow.componentHandler = componentHandler;
     iframe.contentWindow.isComponent = true;
     iframe.contentWindow.args = options.args;
+    loadResolve && loadResolve();
     iframe.contentWindow.setDimensions = (width, height) => {
       iframe.width = width;
       iframe.height = height;
     };
     iframe.contentWindow.reportComponentApi = (api) => {
       returnObj.component = api;
-      returnObj.onInit();
       initResolve && initResolve();
     };
 
@@ -70,13 +70,16 @@ export const generateIframe = async (options) => {
     iframe.contentDocument.documentElement.appendChild(script);
   };
   let initResolve;
+  let loadResolve;
 
   let returnObj = {
     element: iframe,
     component: {},
-    onInit: () => {},
     init: async () => {
       await new Promise((r) => (initResolve = r));
+    },
+    load: async () => {
+      await new Promise((r) => (loadResolve = r));
     },
   };
 
