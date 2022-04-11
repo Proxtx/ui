@@ -50,6 +50,7 @@ export const generateIframe = async (options) => {
     iframe.contentWindow.setDimensions = (width, height) => {
       iframe.width = width;
       iframe.height = height;
+      window.autoSetDimensions && window.autoSetDimensions();
     };
     iframe.contentWindow.reportComponentApi = (api) => {
       returnObj.component = api;
@@ -97,6 +98,16 @@ export const startup = async () => {
 
   await importObject.create(...window.args);
 
+  autoSetDimensions();
+  window.autoSetDimensions = autoSetDimensions;
+
+  document.body.style.overflow = "hidden";
+  document.body.style.margin = "0";
+
+  window.reportComponentApi(importObject);
+};
+
+const autoSetDimensions = () => {
   let calculatedStyle = getComputedStyle(
     document.getElementById("componentWrap")
   );
@@ -104,11 +115,6 @@ export const startup = async () => {
     calculatedStyle.width.split("px")[0],
     calculatedStyle.height.split("px")[0]
   );
-
-  document.body.style.overflow = "hidden";
-  document.body.style.margin = "0";
-
-  window.reportComponentApi(importObject);
 };
 
 if (window.isComponent) startup();
