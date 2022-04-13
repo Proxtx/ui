@@ -8,8 +8,8 @@ else componentHandler = await (await fetch(import.meta.url)).text();
  * @returns The component generator
  */
 export const load = (url) => {
-  return async function () {
-    return await generateIframe({ url, args: arguments });
+  return function () {
+    return generateIframe({ url, args: arguments });
   };
 };
 
@@ -37,24 +37,23 @@ export const loadPack = async (url) => {
  * @param {Object} options Additional options. Must provide the location of module
  * @return {Module} The module as class
  */
-export const generateIframe = async (options) => {
+export const generateIframe = (options) => {
   let iframe = document.createElement("iframe");
   iframe.src = options.url;
   iframe.style.border = "none";
 
-  iframe.onload = () => {
+  iframe.onload = async () => {
     iframe.contentWindow.componentHandler = componentHandler;
     iframe.contentWindow.isComponent = true;
     iframe.contentWindow.args = options.args;
-    loadResolve && loadResolve();
     iframe.contentWindow.setDimensions = (width, height) => {
       iframe.width = width;
       iframe.height = height;
       window.autoSetDimensions && window.autoSetDimensions();
     };
-    iframe.contentWindow.reportComponentApi = (api) => {
+    iframe.contentWindow.reportComponentApi = async (api) => {
       returnObj.component = api;
-      initResolve && initResolve();
+      for (let i of initResolve) await i();
     };
 
     let contentWrap = iframe.contentDocument.createElement("div");
@@ -65,28 +64,33 @@ export const generateIframe = async (options) => {
     }
     iframe.contentDocument.body.appendChild(contentWrap);
 
+    for (let i of loadResolve) await i();
+
     let script = iframe.contentDocument.createElement("script");
     script.type = "module";
     script.text = componentHandler;
     iframe.contentDocument.documentElement.appendChild(script);
   };
-  let initResolve;
-  let loadResolve;
+  let initResolve = [];
+  let loadResolve = [];
 
   let returnObj = {
     element: iframe,
     component: {},
-    init: async () => {
-      await new Promise((r) => (initResolve = r));
+    init: (job) => {
+      initResolve.push(job);
     },
-    load: async () => {
-      await new Promise((r) => (loadResolve = r));
+    load: (job) => {
+      loadResolve.push(job);
     },
   };
 
   return returnObj;
 };
 
+/**
+ * This function should run on component startup
+ */
 export const startup = async () => {
   window.load = load;
 
@@ -100,6 +104,9 @@ export const startup = async () => {
 
   autoSetDimensions();
   window.autoSetDimensions = autoSetDimensions;
+  new ResizeObserver(autoSetDimensions).observe(
+    document.getElementById("componentWrap")
+  );
 
   document.body.style.overflow = "hidden";
   document.body.style.margin = "0";
@@ -119,6 +126,9 @@ const autoSetDimensions = () => {
 
 if (window.isComponent) startup();
 
+/**
+ * Automatically replaces elements with the class component with an actually component
+ */
 export const insertComponents = async () => {
   let components = document.getElementsByClassName("component");
   for (let i of components) {
@@ -128,6 +138,6 @@ export const insertComponents = async () => {
     );
     let res = await load(i.getAttribute("src"))(attributes);
     i.appendChild(res.element);
-    await res.init();
+    await new Promise((r) => res.init(r));
   }
 };
